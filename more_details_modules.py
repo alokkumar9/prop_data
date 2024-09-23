@@ -1,4 +1,9 @@
 from selenium_helper import *
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException
+
+def clean_text(t):
+  t=t.replace("\n","").replace("\t","").replace(":","").replace("*","").strip()
+  return t
 
 def nearest_title(element):
   nearest_b = element.find_element(By.XPATH, "./preceding::b[1]")
@@ -106,6 +111,7 @@ def data2_extraction_df(driver):
   df2 = pd.DataFrame(data2)
   return df2
 
+
 def get_building_details(table_element):
   building_details = []
   tbody_element = table_element.find_elements(By.CSS_SELECTOR, ":scope>tbody")[0]
@@ -122,7 +128,7 @@ def get_building_details(table_element):
         "apartment_type": inner_table_rtds[1].text.strip(),
         "carpet_area_sqmts": float(inner_table_rtds[2].text.strip()),
         "number_of_apartments": int(inner_table_rtds[3].text.strip()),
-        "number_of_booked_apartment:": int(inner_table_rtds[4].text.strip())
+        "number_of_booked_apartment": int(inner_table_rtds[4].text.strip())
     }
     building_details.append(info)
   return building_details

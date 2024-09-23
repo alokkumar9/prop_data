@@ -22,7 +22,7 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 import pandas as pd
 from captcha_modules import *
 from more_details_modules import *
-
+import time
 def setup_driver():
   chrome_options = Options()
   chrome_options.add_argument('--headless')
@@ -118,8 +118,8 @@ def manage_captcha_logic(driver):
         attempt += 1
         # Uncomment the following line if you want a delay between attempts
         # time.sleep(2)
-
     return False
+
 
 def switch_tab(driver, visit_details_url):
     try:
@@ -128,38 +128,51 @@ def switch_tab(driver, visit_details_url):
         load_captcha_website(driver, visit_details_url)
 
         if manage_captcha_logic(driver):
-            WebDriverWait(driver, 20).until(
-                EC.all_of(
-                    EC.visibility_of_element_located((By.TAG_NAME, "select")),
-                    EC.visibility_of_element_located((By.TAG_NAME, "input")),
-                    EC.visibility_of_element_located((By.TAG_NAME, "table")),
-                    EC.visibility_of_element_located((By.TAG_NAME, "td")),
-                )
-            )
-            try:
-              df1 = data1_extraction_df(driver)
-              df2 = data2_extraction_df(driver)
-              combined_df = pd.concat([df1, df2], ignore_index=True)
-              combined_df_after_date_standardization = date_standizer_for_table(combined_df)
-              df_dict = combined_df_after_date_standardization.to_dict(orient="records")
-              property_details_dict = well_formated_dict(df_dict)
-            except Exception as e:
-              property_details_dict = None
+            wait = WebDriverWait(driver, 15)
+            wait.until(EC.all_of(
+                EC.visibility_of_element_located((By.TAG_NAME, "select")),
+                EC.visibility_of_element_located((By.TAG_NAME, "input")),
+                EC.visibility_of_element_located((By.TAG_NAME, "table"))
+            ))
+
+            wait.until(lambda d: d.execute_script('return document.readyState') == 'complete')
+
+            # Check if jQuery is available before using it
+            if driver.execute_script("return typeof jQuery !== 'undefined'"):
+                wait.until(lambda d: d.execute_script('return jQuery.active == 0'))
 
             try:
-              building_title_element = driver.find_element(By.XPATH, "//label[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'summary of building details')]")
-              table_element = building_title_element.find_element(By.XPATH, "./following::table[1]")
-              building_details = get_building_details(table_element)
-            except NoSuchElementException:
-              building_details = None
+                property_details_dict = extract_property_details(driver)
+            except Exception as e:
+                print(f"Error in property data extraction: {str(e)}")
+                property_details_dict = None
+
+            try:
+                building_details = extract_building_details(driver, wait)
+            except Exception as e:
+                print(f"Error in building data extraction: {str(e)}")
+                building_details = None
 
             return property_details_dict, building_details
         else:
             print("Captcha not solved")
             return None, None
     except Exception as e:
-        print(f"An error occurred: {str(e)}")
+        print(f"An error occurred in selenium helper: {str(e)}")
         return None, None
     finally:
         driver.close()
         driver.switch_to.window(driver.window_handles[0])
+
+def extract_property_details(driver):
+    df1 = data1_extraction_df(driver)
+    df2 = data2_extraction_df(driver)
+    combined_df = pd.concat([df1, df2], ignore_index=True)
+    combined_df_after_date_standardization = date_standizer_for_table(combined_df)
+    df_dict = combined_df_after_date_standardization.to_dict(orient="records")
+    return well_formated_dict(df_dict)
+
+def extract_building_details(driver, wait):
+    building_title_element = wait.until(EC.presence_of_element_located((By.XPATH, "//label[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'summary of building details')]")))
+    table_element = building_title_element.find_element(By.XPATH, "./following::table[1]")
+    return get_building_details(table_element)

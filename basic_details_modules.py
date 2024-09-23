@@ -22,7 +22,6 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException,
 import pandas as pd
 from selenium_helper import *
 
-
 def get_element_info(elements):
   projects_in_page_list=[]
   for element in elements:

@@ -21,25 +21,18 @@ import re
 from doctr.io import DocumentFile
 from doctr.models import ocr_predictor
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 predictor = ocr_predictor(
     det_arch='fast_small',  # Text detection model
     reco_arch='crnn_vgg16_bn',
     # resolve_blocks=True,
     pretrained=True
     )
-# predictor=ocr_predictor(det_arch='db_resnet50', reco_arch='crnn_vgg16_bn')
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-import time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import Select
-from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException
 
-# Usage:
 color_map = {
     (147, 194, 172,255): (242, 239, 210, 255),
     (151, 191, 163,255): (242, 239, 210, 255),
@@ -101,21 +94,72 @@ def type_captcha_to_input(driver,captcha_text):
   )
   captcha_input.send_keys(captcha_text)
 
-def get_captcha_canvas_image(driver,timeout=20):
-    try:
-        canvas_element = WebDriverWait(driver, timeout).until(
-            EC.presence_of_element_located((By.ID, "captcahCanvas"))
-        )
-        canvas_base64 = driver.execute_script(
-            "return arguments[0].toDataURL('image/png').substring(21);",
-            canvas_element
-        )
-        canvas_png = base64.b64decode(canvas_base64)
-        image = Image.open(BytesIO(canvas_png))
-        return image
-    except TimeoutException:
-        print(f"Canvas element did not load within {timeout} seconds")
-        return None
+# def get_captcha_canvas_image(driver,timeout=20):
+#     try:
+#         canvas_element = WebDriverWait(driver, timeout).until(
+#             EC.presence_of_element_located((By.ID, "captcahCanvas"))
+#         )
+#         canvas_base64 = driver.execute_script(
+#             "return arguments[0].toDataURL('image/png').substring(21);",
+#             canvas_element
+#         )
+#         canvas_png = base64.b64decode(canvas_base64)
+#         image = Image.open(BytesIO(canvas_png))
+#         return image
+#     except TimeoutException:
+#         print(f"Canvas element did not load within {timeout} seconds")
+#         return None
+
+
+
+def get_captcha_canvas_image(driver, timeout=20, max_retries=3, retry_delay=1):
+    for attempt in range(max_retries):
+        try:
+            logging.info(f"Attempting to locate captcha canvas (Attempt {attempt + 1}/{max_retries})")
+            canvas_element = WebDriverWait(driver, timeout).until(
+                EC.visibility_of_element_located((By.ID, "captcahCanvas"))
+            )
+            
+            # Wait for the canvas to be visible and have a non-zero size
+            WebDriverWait(driver, timeout).until(
+                lambda d: d.execute_script("return arguments[0].width > 0 && arguments[0].height > 0", canvas_element)
+            )
+            
+            # Additional check to ensure the captcha is fully rendered
+            time.sleep(0.5)  # Short delay to allow for any final rendering
+            
+            logging.info("Extracting canvas image data")
+            canvas_base64 = driver.execute_script(
+                "return arguments[0].toDataURL('image/png').substring(21);",
+                canvas_element
+            )
+            
+            # Verify that we actually got image data
+            if not canvas_base64:
+                logging.warning("Canvas data is empty, retrying...")
+                time.sleep(retry_delay)
+                continue
+            
+            canvas_png = base64.b64decode(canvas_base64)
+            image = Image.open(BytesIO(canvas_png))
+            
+            # Final check: ensure the image has actual content
+            if image.size[0] > 1 and image.size[1] > 1:
+                print("Successfully extracted captcha image")
+                return image
+            else:
+                logging.warning("Extracted image is too small, likely not fully loaded. Retrying...")
+        except TimeoutException:
+            logging.warning(f"Canvas element did not load within {timeout} seconds")
+        except StaleElementReferenceException:
+            logging.warning("Canvas element became stale, retrying...")
+        except Exception as e:
+            logging.error(f"Unexpected error occurred: {str(e)}")
+        
+        time.sleep(retry_delay)
+    
+    logging.error(f"Failed to extract captcha image after {max_retries} attempts")
+    return None
 
 def is_captcha_length_valid(predicted_captcha):
   if len(predicted_captcha) != 6:
