@@ -110,8 +110,6 @@ def type_captcha_to_input(driver,captcha_text):
 #         print(f"Canvas element did not load within {timeout} seconds")
 #         return None
 
-
-
 def get_captcha_canvas_image(driver, timeout=20, max_retries=3, retry_delay=1):
     for attempt in range(max_retries):
         try:
@@ -121,6 +119,8 @@ def get_captcha_canvas_image(driver, timeout=20, max_retries=3, retry_delay=1):
             )
             
             # Wait for the canvas to be visible and have a non-zero size
+            wait = WebDriverWait(driver, 10)
+            wait.until(lambda d: d.execute_script('return document.readyState') == 'complete')
             WebDriverWait(driver, timeout).until(
                 lambda d: d.execute_script("return arguments[0].width > 0 && arguments[0].height > 0", canvas_element)
             )
@@ -136,7 +136,7 @@ def get_captcha_canvas_image(driver, timeout=20, max_retries=3, retry_delay=1):
             
             # Verify that we actually got image data
             if not canvas_base64:
-                logging.warning("Canvas data is empty, retrying...")
+                print("Canvas data is empty, retrying...")
                 time.sleep(retry_delay)
                 continue
             
