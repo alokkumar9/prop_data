@@ -84,6 +84,11 @@ def manage_captcha_logic(driver):
     attempt = 1
     while attempt <= 3:
         try:
+            time.sleep(2)
+            wait = WebDriverWait(driver, 10)
+
+        # Wait for the page to load completely
+            wait.until(lambda d: d.execute_script('return document.readyState') == 'complete')
             captcha_canvas_img = get_captcha_canvas_image(driver)
             if captcha_canvas_img is None:
                 print("captcha_canvas_img is None")
@@ -103,6 +108,7 @@ def manage_captcha_logic(driver):
 
                 if is_invalid_captcha_dialog(driver):
                     print(f"Invalid CAPTCHA. Attempt: {attempt}")  # Moved here
+                    print(captcha_alpha_num)
                     ok_button = WebDriverWait(driver, 20).until(
                         EC.element_to_be_clickable((By.XPATH, "//button[text()='Ok']"))
                     )
@@ -110,7 +116,12 @@ def manage_captcha_logic(driver):
                     # No return False here, allowing the loop to continue
                 else:
                     print(f"CAPTCHA solved in attempt: {attempt}")
+                    print(captcha_alpha_num)
+
                     return True
+            else:
+               print("Captcha not valid: ", captcha_alpha_num, ",  attempt: ",attempt)
+               refresh_captcha(driver)
 
         except Exception as e:
             print(f"Error in attempt {attempt}: {str(e)}")
@@ -129,14 +140,12 @@ def switch_tab(driver, visit_details_url):
 
         if manage_captcha_logic(driver):
             wait = WebDriverWait(driver, 15)
+            wait.until(lambda d: d.execute_script('return document.readyState') == 'complete')
             wait.until(EC.all_of(
                 EC.visibility_of_element_located((By.TAG_NAME, "select")),
                 EC.visibility_of_element_located((By.TAG_NAME, "input")),
                 EC.visibility_of_element_located((By.TAG_NAME, "table"))
             ))
-
-            wait.until(lambda d: d.execute_script('return document.readyState') == 'complete')
-
             # Check if jQuery is available before using it
             if driver.execute_script("return typeof jQuery !== 'undefined'"):
                 wait.until(lambda d: d.execute_script('return jQuery.active == 0'))
