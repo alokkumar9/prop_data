@@ -35,9 +35,10 @@ for page in pages:
 
             try:
                 # complete_project_info['project_details'], complete_project_info['building_details'] = None, None
-                project_details, building_details= switch_tab(driver, visit_details_url)
+                project_details, building_details, parking_details= switch_tab(driver, visit_details_url)
                 complete_project_info['project_details']=project_details
                 complete_project_info['building_details']=building_details
+                complete_project_info["parking_details"]=parking_details
                 
                 if project_details is not None:
                   complete_project_info['project_details_extracted'] = True

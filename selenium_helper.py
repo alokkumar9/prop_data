@@ -165,7 +165,13 @@ def switch_tab(driver, visit_details_url):
                 print(f"Error in building data extraction: {str(e)}")
                 building_details = None
 
-            return property_details_dict, building_details
+            try:
+               parking_details=get_all_parking_details(driver)
+            except Exception as e:
+               print(f"Error in parking details extraction: {str(e)}")
+               parking_details=None
+
+            return property_details_dict, building_details, parking_details
         else:
             print("Captcha not solved")
             return None, None

@@ -132,3 +132,50 @@ def get_building_details(table_element):
     }
     building_details.append(info)
   return building_details
+
+def get_single_parking_details(mt4):
+  parking_details = {}
+  class_ml2_elements = mt4.find_elements(By.XPATH, ".//b[contains(@class, 'ml-2')]")
+  parking_details["building_name"]=class_ml2_elements[0].text.strip()
+  parking_details["wing_name"]=class_ml2_elements[1].text.strip()
+  t_head=mt4.find_element(By.TAG_NAME, "thead")
+  t_head_rows=t_head.find_elements(By.TAG_NAME, "th")
+  parking_details["head"]=[th.text.strip() for th in t_head_rows[2:]]
+
+
+  t_body=mt4.find_element(By.TAG_NAME, "tbody")
+  all_rows=t_body.find_elements(By.TAG_NAME, "tr")
+  total_details_row_element=all_rows[-1]
+  td_total=total_details_row_element.find_elements(By.TAG_NAME, "td")
+  p_type_list=[]
+  p_type_list.append({
+      "parking_type": td_total[0].text.strip(),
+      "info": [int(td.text.strip()) for td in td_total[1:]]
+  })
+
+  other_rows=all_rows[:-1]
+  for row in other_rows:
+    td_other=row.find_elements(By.TAG_NAME, "td")
+    p_type_list.append({
+        "parking_type": td_other[1].text.strip(),
+        "info": [int(td.text.strip()) for td in td_other[2:]]
+    })
+    
+  parking_details["parking_details"]=p_type_list
+  return parking_details
+
+def get_parking_elements(driver):
+  try:
+    parking_details = driver.find_element(By.XPATH, "//b[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'parking details')]")
+    mt4_elements = parking_details.find_elements(By.XPATH, "./following::div[@class='mt-4']")
+    return mt4_elements
+  except NoSuchElementException:
+    return None
+  
+def get_all_parking_details(driver):
+  mt4_elements=get_parking_elements(driver)
+  if mt4_elements is None:
+    return None
+  building_details=[get_single_parking_details(mt4) for mt4 in mt4_elements]
+  return building_details
+
