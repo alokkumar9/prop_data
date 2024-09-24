@@ -10,11 +10,17 @@ client=connect_to_atlas()
 mg_db=client["property"]
 mg_collection=mg_db["maharashtra"]
 
-pages = [11, 12, 13]  # Define the pages to scrape
-all_projects_list = []
+pages = [11,12,13,14]  # Define the pages to scrape
+# all_projects_list = []
 driver=setup_driver()
+
+def property_not_added_file(l):
+  with open('property_not_added.txt', 'a') as f:
+    for item in l:
+      f.write("%s\n" % item)
+
 for page in pages:
-    print(f"Current Page: ",page)
+    print("Current Page: ",page)
 
     try:
         website = f"https://maharera.maharashtra.gov.in/projects-search-result?page={page}"
@@ -25,25 +31,32 @@ for page in pages:
         for project in projects_in_page_list:
             complete_project_info = add_most_basic_info(project)
             visit_details_url = project['visit_details_url']
+            reg_num=complete_project_info['reg_number']
 
             try:
                 # complete_project_info['project_details'], complete_project_info['building_details'] = None, None
-                complete_project_info['project_details'], complete_project_info['building_details'] = switch_tab(driver, visit_details_url)
-                if complete_project_info['project_details'] is not None:
+                project_details, building_details= switch_tab(driver, visit_details_url)
+                complete_project_info['project_details']=project_details
+                complete_project_info['building_details']=building_details
+                
+                if project_details is not None:
                   complete_project_info['project_details_extracted'] = True
-                if complete_project_info['building_details'] is not None:
+                if building_details is not None:
                   complete_project_info['building_details_extracted'] = True
 
             except Exception as e:
                 print(f"Error fetching details for project: {e}")
+                property_not_added_file([reg_num])
                 continue
 
-            all_projects_list.append(complete_project_info)
+            # all_projects_list.append(complete_project_info)
             print(complete_project_info)
+            insert_many(mg_db, "maharashtra", [complete_project_info])
+            print(f"added {reg_num} to database")
             print("\n")
-        insert_many(mg_db, "maharashtra", all_projects_list)
+
         print(f"Page {page} done\n")
-        all_projects_list.clear()
+        # all_projects_list.clear()
     except Exception as e:
         print(f"There was an error for page {page}: {e}")
         driver = setup_driver()

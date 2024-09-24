@@ -140,12 +140,15 @@ def switch_tab(driver, visit_details_url):
 
         if manage_captcha_logic(driver):
             wait = WebDriverWait(driver, 15)
+            take_screenshot(driver)
             wait.until(lambda d: d.execute_script('return document.readyState') == 'complete')
+
             wait.until(EC.all_of(
                 EC.visibility_of_element_located((By.TAG_NAME, "select")),
                 EC.visibility_of_element_located((By.TAG_NAME, "input")),
                 EC.visibility_of_element_located((By.TAG_NAME, "table"))
             ))
+            
             # Check if jQuery is available before using it
             if driver.execute_script("return typeof jQuery !== 'undefined'"):
                 wait.until(lambda d: d.execute_script('return jQuery.active == 0'))
