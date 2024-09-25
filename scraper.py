@@ -47,7 +47,7 @@ for page in pages:
 
             except Exception as e:
                 print(f"Error fetching details for project: {e}")
-                property_not_added_file([reg_num])
+                property_not_added_file([reg_num+"  "+visit_details_url])
                 continue
 
             # all_projects_list.append(complete_project_info)
