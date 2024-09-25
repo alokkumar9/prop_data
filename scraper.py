@@ -46,14 +46,14 @@ for page in pages:
                   complete_project_info['building_details_extracted'] = True
 
             except Exception as e:
-                print(f"Error fetching details for project: {e}")
+                print(f"Page {page},  Error fetching details for project: {e}")
                 property_not_added_file([reg_num+"  "+visit_details_url])
                 continue
 
             # all_projects_list.append(complete_project_info)
             print(complete_project_info)
             insert_many(mg_db, "maharashtra", [complete_project_info])
-            print(f"added {reg_num} to database")
+            print(f"added {reg_num} to database from Page: {page}")
             print("\n")
 
         print(f"Page {page} done\n")
