@@ -10,7 +10,7 @@ client=connect_to_atlas()
 mg_db=client["property"]
 mg_collection=mg_db["maharashtra"]
 
-pages = [i for i in range(571,601)]  # Define the pages to scrape
+pages = [i for i in range(674,691)]  # Define the pages to scrape
 # all_projects_list = []
 driver=setup_driver()
 
