@@ -1,8 +1,7 @@
 optimized_captcha.png
-.vscode
-dump
-myenv
-scrap
+.vscode/
+dump/
+myenv/
+scrap/
 property_not_added.txt
-
-__pycache__
+__pycache__/
