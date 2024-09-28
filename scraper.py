@@ -10,14 +10,10 @@ client=connect_to_atlas()
 mg_db=client["property"]
 mg_collection=mg_db["maharashtra"]
 
-pages = [11,12,13,14]  # Define the pages to scrape
+pages = [i for i in range(551,571)]  # Define the pages to scrape
 # all_projects_list = []
 driver=setup_driver()
 
-def property_not_added_file(l):
-  with open('property_not_added.txt', 'a') as f:
-    for item in l:
-      f.write("%s\n" % item)
 
 for page in pages:
     print("Current Page: ",page)
@@ -35,7 +31,7 @@ for page in pages:
 
             try:
                 # complete_project_info['project_details'], complete_project_info['building_details'] = None, None
-                project_details, building_details, parking_details= switch_tab(driver, visit_details_url)
+                project_details, building_details, parking_details= switch_tab(driver, reg_num, visit_details_url)
                 complete_project_info['project_details']=project_details
                 complete_project_info['building_details']=building_details
                 complete_project_info["parking_details"]=parking_details

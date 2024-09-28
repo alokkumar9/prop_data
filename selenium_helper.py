@@ -33,6 +33,11 @@ def setup_driver():
 def take_screenshot(driver):
   driver.save_screenshot("screenshot.png")
 
+def property_not_added_file(l):
+  with open('property_not_added.txt', 'a') as f:
+    for item in l:
+      f.write("%s\n" % item)
+
 def clean_text(t):
   t=t.replace("\n","").replace("\t","").replace(":","").replace("*","").strip()
   return t
@@ -132,7 +137,7 @@ def manage_captcha_logic(driver):
     return False
 
 
-def switch_tab(driver, visit_details_url):
+def switch_tab(driver, reg_num, visit_details_url):
     try:
         driver.execute_script("window.open('');")
         driver.switch_to.window(driver.window_handles[-1])
@@ -174,6 +179,7 @@ def switch_tab(driver, visit_details_url):
             return property_details_dict, building_details, parking_details
         else:
             print("Captcha not solved")
+            property_not_added_file([reg_num+"  "+visit_details_url])
             return None, None
     except Exception as e:
         print(f"An error occurred in selenium helper: {str(e)}")
