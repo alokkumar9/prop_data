@@ -1,5 +1,6 @@
 from selenium_helper import *
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException
+import pandas as pd
 
 def clean_text(t):
   t=t.replace("\n","").replace("\t","").replace(":","").replace("*","").strip()
@@ -112,70 +113,129 @@ def data2_extraction_df(driver):
   return df2
 
 
+# def get_building_details(table_element):
+#   building_details = []
+#   tbody_element = table_element.find_elements(By.CSS_SELECTOR, ":scope>tbody")[0]
+#   rows=tbody_element.find_elements(By.CSS_SELECTOR, ":scope>tr")
+#   for row in rows:
+#     cols = row.find_elements(By.CSS_SELECTOR, ":scope>td")
+#     building_name=cols[1].text.strip()
+#     inner_table=cols[2].find_element(By.CSS_SELECTOR, ":scope>table")
+#     inner_table_tbody = inner_table.find_elements(By.CSS_SELECTOR, ":scope>tbody")[0]
+#     inner_table_rows = inner_table_tbody.find_elements(By.CSS_SELECTOR, ":scope>tr")[0]
+#     inner_table_rtds = inner_table_rows.find_elements(By.CSS_SELECTOR, ":scope>td")
+#     info={
+#         "building_name": building_name,
+#         "apartment_type": inner_table_rtds[1].text.strip(),
+#         "carpet_area_sqmts": float(inner_table_rtds[2].text.strip()),
+#         "number_of_apartments": int(inner_table_rtds[3].text.strip()),
+#         "number_of_booked_apartment": int(inner_table_rtds[4].text.strip())
+#     }
+#     building_details.append(info)
+#   return building_details
+
 def get_building_details(table_element):
-  building_details = []
-  tbody_element = table_element.find_elements(By.CSS_SELECTOR, ":scope>tbody")[0]
-  rows=tbody_element.find_elements(By.CSS_SELECTOR, ":scope>tr")
-  for row in rows:
-    cols = row.find_elements(By.CSS_SELECTOR, ":scope>td")
-    building_name=cols[1].text.strip()
-    inner_table=cols[2].find_element(By.CSS_SELECTOR, ":scope>table")
-    inner_table_tbody = inner_table.find_elements(By.CSS_SELECTOR, ":scope>tbody")[0]
-    inner_table_rows = inner_table_tbody.find_elements(By.CSS_SELECTOR, ":scope>tr")[0]
-    inner_table_rtds = inner_table_rows.find_elements(By.CSS_SELECTOR, ":scope>td")
-    info={
-        "building_name": building_name,
-        "apartment_type": inner_table_rtds[1].text.strip(),
-        "carpet_area_sqmts": float(inner_table_rtds[2].text.strip()),
-        "number_of_apartments": int(inner_table_rtds[3].text.strip()),
-        "number_of_booked_apartment": int(inner_table_rtds[4].text.strip())
-    }
-    building_details.append(info)
-  return building_details
+  df_dict=None
+  html_table=table_element.get_attribute("outerHTML")
+  df_table = html_table_to_df(html_table)
+  df_table=df_table[["Building Name","Apartment Type","Carpet Area (in Sqmts)","Number of Apartment","Number of Booked Apartment"]]
+  df_table=df_table.rename(columns={"Building Name": "building_name", "Apartment Type": "apartment_type", "Carpet Area (in Sqmts)": "carpet_area_sqmts", "Number of Apartment": "number_of_apartments", "Number of Booked Apartment": "number_of_booked_apartment"})
+  df_dict=df_table.to_dict(orient="records")
+  # dict_building=well_formated_dict(df_dict)
+  return df_dict
 
-def get_single_parking_details(mt4):
+# def get_single_parking_details(mt4):
+#   parking_details = {}
+#   class_ml2_elements = mt4.find_elements(By.XPATH, ".//b[contains(@class, 'ml-2')]")
+#   parking_details["building_name"]=class_ml2_elements[0].text.strip()
+#   parking_details["wing_name"]=class_ml2_elements[1].text.strip()
+#   t_head=mt4.find_element(By.TAG_NAME, "thead")
+#   t_head_rows=t_head.find_elements(By.TAG_NAME, "th")
+#   parking_details["head"]=[th.text.strip() for th in t_head_rows[2:]]
+
+
+#   t_body=mt4.find_element(By.TAG_NAME, "tbody")
+#   all_rows=t_body.find_elements(By.TAG_NAME, "tr")
+#   total_details_row_element=all_rows[-1]
+#   td_total=total_details_row_element.find_elements(By.TAG_NAME, "td")
+#   p_type_list=[]
+#   p_type_list.append({
+#       "parking_type": td_total[0].text.strip(),
+#       "info": [int(td.text.strip()) for td in td_total[1:]]
+#   })
+
+#   other_rows=all_rows[:-1]
+#   for row in other_rows:
+#     td_other=row.find_elements(By.TAG_NAME, "td")
+#     p_type_list.append({
+#         "parking_type": td_other[1].text.strip(),
+#         "info": [int(td.text.strip()) for td in td_other[2:]]
+#     })
+    
+#   parking_details["parking_details"]=p_type_list
+#   return parking_details
+
+def get_single_parking_details(driver,card):
   parking_details = {}
-  class_ml2_elements = mt4.find_elements(By.XPATH, ".//b[contains(@class, 'ml-2')]")
-  parking_details["building_name"]=class_ml2_elements[0].text.strip()
-  parking_details["wing_name"]=class_ml2_elements[1].text.strip()
-  t_head=mt4.find_element(By.TAG_NAME, "thead")
+  b_elements = card.find_elements(By.TAG_NAME, "b")
+  parking_details["building_name"]=driver.execute_script("return arguments[0].textContent", b_elements[0]).strip()
+  parking_details["wing_name"]=driver.execute_script("return arguments[0].textContent", b_elements[1]).strip()
+  t_head=card.find_element(By.TAG_NAME, "thead")
   t_head_rows=t_head.find_elements(By.TAG_NAME, "th")
-  parking_details["head"]=[th.text.strip() for th in t_head_rows[2:]]
+  parking_details["head"]=[driver.execute_script("return arguments[0].textContent", th).strip() for th in t_head_rows[2:]]
 
-
-  t_body=mt4.find_element(By.TAG_NAME, "tbody")
+  t_body=card.find_element(By.TAG_NAME, "tbody")
   all_rows=t_body.find_elements(By.TAG_NAME, "tr")
   total_details_row_element=all_rows[-1]
   td_total=total_details_row_element.find_elements(By.TAG_NAME, "td")
   p_type_list=[]
   p_type_list.append({
-      "parking_type": td_total[0].text.strip(),
-      "info": [int(td.text.strip()) for td in td_total[1:]]
+      "parking_type": driver.execute_script("return arguments[0].textContent", td_total[0]).strip(),
+      "info": [int(driver.execute_script("return arguments[0].textContent", td).strip()) for td in td_total[1:]]
   })
 
   other_rows=all_rows[:-1]
   for row in other_rows:
     td_other=row.find_elements(By.TAG_NAME, "td")
     p_type_list.append({
-        "parking_type": td_other[1].text.strip(),
-        "info": [int(td.text.strip()) for td in td_other[2:]]
+        "parking_type": driver.execute_script("return arguments[0].textContent", td_other[1]).strip(),
+        "info": [int(driver.execute_script("return arguments[0].textContent", td).strip()) for td in td_other[2:]]
     })
-    
+
   parking_details["parking_details"]=p_type_list
   return parking_details
 
+
+# def get_parking_elements(driver):
+#   try:
+#     parking_details = driver.find_element(By.XPATH, "//b[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'parking details')]")
+#     mt4_elements = parking_details.find_elements(By.XPATH, "./following::div[@class='mt-4']")
+#     return mt4_elements
+#   except NoSuchElementException:
+#     return None
+
+
+  
+# def get_all_parking_details(driver):
+#   mt4_elements=get_parking_elements(driver)
+#   if mt4_elements is None:
+#     return None
+#   building_details=[get_single_parking_details(mt4) for mt4 in mt4_elements]
+#   return building_details
+
 def get_parking_elements(driver):
   try:
-    parking_details = driver.find_element(By.XPATH, "//b[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'parking details')]")
-    mt4_elements = parking_details.find_elements(By.XPATH, "./following::div[@class='mt-4']")
-    return mt4_elements
+    parking_element = driver.find_element(By.ID, "parkingDetails")
+    cards=parking_element.find_elements(By.CLASS_NAME, "card")
+    return cards
   except NoSuchElementException:
     return None
-  
-def get_all_parking_details(driver):
-  mt4_elements=get_parking_elements(driver)
-  if mt4_elements is None:
-    return None
-  building_details=[get_single_parking_details(mt4) for mt4 in mt4_elements]
-  return building_details
 
+def get_all_parking_details(driver):
+  card_elements=get_parking_elements(driver)
+  if card_elements is None:
+    return None
+  building_details=[get_single_parking_details(driver,card) for card in card_elements]
+  if len(building_details)==0:
+    return None
+  return building_details

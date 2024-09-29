@@ -55,7 +55,7 @@ def well_formated_dict(df_dict):
             record[key] = float(value)
           except ValueError:
             # If both conversions fail, leave the value as it is
-            pass
+            record[key]=value.strip()
   return df_dict
 
 
@@ -169,7 +169,6 @@ def switch_tab(driver, reg_num, visit_details_url):
             except Exception as e:
                 print(f"Error in building data extraction: {str(e)}")
                 building_details = None
-
             try:
                parking_details=get_all_parking_details(driver)
             except Exception as e:
@@ -197,6 +196,6 @@ def extract_property_details(driver):
     return well_formated_dict(df_dict)
 
 def extract_building_details(driver, wait):
-    building_title_element = wait.until(EC.presence_of_element_located((By.XPATH, "//label[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'summary of building details')]")))
+    building_title_element = wait.until(EC.presence_of_element_located((By.XPATH, "//label[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'summary of apartments')]")))
     table_element = building_title_element.find_element(By.XPATH, "./following::table[1]")
     return get_building_details(table_element)
