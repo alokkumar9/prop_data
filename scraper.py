@@ -10,14 +10,14 @@ client=connect_to_atlas()
 mg_db=client["property"]
 mg_collection=mg_db["maharashtra"]
 
-pages = [i for i in range(692,721)]  # Define the pages to scrape
+pages = [i for i in range(970,1001)]  # Define the pages to scrape
+# pages=[50]
 # all_projects_list = []
 driver=setup_driver()
 
 
 for page in pages:
     print("Current Page: ",page)
-
     try:
         website = f"https://maharera.maharashtra.gov.in/projects-search-result?page={page}"
         driver.get(website)
@@ -46,14 +46,12 @@ for page in pages:
                 property_not_added_file([reg_num+"  "+visit_details_url])
                 continue
 
-            # all_projects_list.append(complete_project_info)
             print(complete_project_info)
             insert_many(mg_db, "maharashtra", [complete_project_info])
             print(f"added {reg_num} to database from Page: {page}")
             print("\n")
 
         print(f"Page {page} done\n")
-        # all_projects_list.clear()
     except Exception as e:
         print(f"There was an error for page {page}: {e}")
         driver = setup_driver()
