@@ -178,8 +178,14 @@ def get_building_details(table_element):
 def get_single_parking_details(driver,card):
   parking_details = {}
   b_elements = card.find_elements(By.TAG_NAME, "b")
-  parking_details["building_name"]=driver.execute_script("return arguments[0].textContent", b_elements[0]).strip()
-  parking_details["wing_name"]=driver.execute_script("return arguments[0].textContent", b_elements[1]).strip()
+  try:
+    parking_details["building_name"]=driver.execute_script("return arguments[0].textContent", b_elements[0]).strip()
+  except Exception as e:
+    parking_details["building_name"]=''
+  try:
+    parking_details["wing_name"]=driver.execute_script("return arguments[0].textContent", b_elements[1]).strip()
+  except Exception as e:
+    parking_details["wing_name"]=''
   t_head=card.find_element(By.TAG_NAME, "thead")
   t_head_rows=t_head.find_elements(By.TAG_NAME, "th")
   parking_details["head"]=[driver.execute_script("return arguments[0].textContent", th).strip() for th in t_head_rows[2:]]
