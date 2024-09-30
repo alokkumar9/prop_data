@@ -10,7 +10,7 @@ client=connect_to_atlas()
 mg_db=client["property"]
 mg_collection=mg_db["maharashtra"]
 
-pages = [i for i in range(1001,1002)]  # Define the pages to scrape
+pages = [i for i in range(1036,1037)]  # Define the pages to scrape
 # pages=[50]
 # all_projects_list = []
 driver=setup_driver()
@@ -43,11 +43,11 @@ for page in pages:
 
             except Exception as e:
                 print(f"Page {page},  Error fetching details for project: {e}")
-                # property_not_added_file([reg_num+"  "+visit_details_url])
+                property_not_added_file([reg_num+"  "+visit_details_url])
                 continue
 
             print(complete_project_info)
-            # insert_many(mg_db, "maharashtra", [complete_project_info])
+            insert_many(mg_db, "maharashtra", [complete_project_info])
             print(f"added {reg_num} to database from Page: {page}")
             print("\n")
 
