@@ -89,7 +89,7 @@ def manage_captcha_logic(driver):
     attempt = 1
     while attempt <= 3:
         try:
-            time.sleep(4)
+            time.sleep(2)
             wait = WebDriverWait(driver, 10)
 
         # Wait for the page to load completely
