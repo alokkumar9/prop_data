@@ -6,3 +6,4 @@ scrap/
 property_not_added.txt
 __pycache__/
 propdata/
+.env
