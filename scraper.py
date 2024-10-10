@@ -9,12 +9,11 @@ driver=setup_driver()
 client=connect_to_atlas()
 mg_db=client["property"]
 mg_collection=mg_db["maharashtra"]
-#from 3701
-pages = [i for i in range(3701,3801)]
-# pages=[50]
-# all_projects_list = []
-driver=setup_driver()
+#4745
+pages = [i for i in range(4746,4747)]
+# pages = [i for i in range(4551,4651)]
 
+driver=setup_driver()
 
 for page in pages:
     print("Current Page: ",page)
